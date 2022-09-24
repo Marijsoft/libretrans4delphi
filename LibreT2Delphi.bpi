@@ -1,0 +1,3 @@
+/* 'LibreT2Delphi' Package */
+OUTPUT_FORMAT(macho-arm64)
+GROUP ( bplLibreT2Delphi.dylib LibreT2Delphi_nonshared.a )
