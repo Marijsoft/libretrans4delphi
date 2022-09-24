@@ -14,13 +14,8 @@ interface
 
 uses
   System.Net.URLClient, System.Net.HttpClient, System.Net.HttpClientComponent,
-  System.Net.Mime,
-//  {$IF not declared(FireMonkeyVersion)}vcl.Dialogs,{$ELSE}fmx.Dialogs,{$IFEND}
-
-  System.JSON, System.Types, System.UITypes, System.Classes, System.SysUtils,
+  System.Net.Mime,System.JSON, System.Types, System.UITypes, System.Classes, System.SysUtils,
   System.Variants, System.Generics.Collections, System.Messaging;
-
-//type TListaServizi=(libretranslate,librede,argos,skitzen,fortytwo,terraprint,vern)
 
 type
   [ComponentPlatformsAttribute($000B945F)]
