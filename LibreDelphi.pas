@@ -3,7 +3,7 @@
 { Delphi component library for LibreTranslator service  }
 {              relased under license AGPL 3.0           }
 {                                                       }
-{ Copyright (C) 2022 Created by Aloe Luigi. 25/09/2022  }
+{ Copyright (C) 2022 Created by MarijSoft. 25/09/2022  }
 {                                                       }
 {*******************************************************}
 {    Platform supported:Win,Linux,MacOS,Android,IOS     }
