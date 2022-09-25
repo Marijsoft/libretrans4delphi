@@ -3,7 +3,7 @@
 { Delphi component library for LibreTranslator service  }
 {              relased under license AGPL 3.0           }
 {                                                       }
-{ Copyright (C) 2022 Created by MarijSoft. 22/09/2022  }
+{ Copyright (C) 2022 Created by Aloe Luigi. 22/09/2022  }
 {                                                       }
 {*******************************************************}
 {    Platform supported:Win,Linux,MacOS,Android,IOS     }
@@ -17,6 +17,7 @@ uses
   System.Net.Mime,System.JSON, System.Types, System.UITypes, System.Classes, System.SysUtils,
   System.Variants, System.Generics.Collections, System.Messaging;
 
+
 type
   [ComponentPlatformsAttribute($000B945F)]
   TLibreTrans = class(TComponent)
@@ -25,6 +26,7 @@ type
   protected
     apikey: string;
     function keyapi: string;
+    function urlendpoint(index: integer): string;
   public
     constructor Create(AOwner: TComponent); override;
     destructor Destroy; override;
@@ -34,19 +36,20 @@ type
     function checklng(Text: string): string;
     function listlng: TStringList;
     function codlng: TStringList;
-    function translatefile(orig, dest, destlng, lngorig: string): string;
+    function translatefile(orig, dest, lngorig, lngdest: string): string;
     function translate(Text, orglng, dstlng: string): string;
     function autotranslate(Text, dstlng: string): string;
-    function urlendpoint(index: integer): string;
+    function sitonline(sitoweb:string):boolean;
+    procedure controllasito;
   end;
 
 const
-  ty: TArray<String> = ['type=text/plain',
-    'type=application/vnd.oasis.opendocument.text',
-    'type=application/vnd.oasis.opendocument.presentation',
-    'type=application/vnd.openxmlformats-officedocument.wordprocessingml.document',
-    'type=application/vnd.openxmlformats-officedocument.presentationml.presentation',
-    'type=application/epub+zip', 'type=text/html'];
+  ty: TArray<String> = ['text/plain',
+    'application/vnd.oasis.opendocument.text',
+    'application/vnd.oasis.opendocument.presentation',
+    'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+    'application/vnd.openxmlformats-officedocument.presentationml.presentation',
+    'application/epub+zip', 'type=text/html'];
 
 const sito: TArray < String >= ['https://libretranslate.com/', 'https://libretranslate.de/',
   'https://translate.argosopentech.com/', 'https://translate.api.skitzen.com/',
@@ -88,6 +91,19 @@ begin
     lng.DisposeOf;
     Net.DisposeOf;
   end;
+end;
+
+procedure TLibreTrans.controllasito;
+var i:integer;
+begin
+for I := Low(sito) to High(sito) do
+begin
+if sitonline(sito[i]) then
+begin
+urlendpoint(i);
+break
+end;
+end;
 end;
 
 constructor TLibreTrans.Create(AOwner: TComponent);
@@ -132,6 +148,17 @@ begin
   end;
 end;
 
+function TLibreTrans.sitonline(sitoweb: string): boolean;
+var net:TNethttpClient;
+s:integer;
+begin
+net:=TNetHttpClient.Create(self);
+s:=net.Get(sitoweb,nil).StatusCode;
+if s=200 then
+Result:=true else Result:=false;
+net.DisposeOf;
+end;
+
 function TLibreTrans.translate(Text, orglng, dstlng: string): string;
 var
   prm: TStringList;
@@ -157,8 +184,8 @@ begin
 
 end;
 
-function TLibreTrans.translatefile(orig, dest, destlng,
-  lngorig: string): string;
+function TLibreTrans.translatefile(orig, dest, lngorig,
+  lngdest: string): string;
 var
   prm: TMultipartFormData;
   ris, dwn, tipo: String;
@@ -186,17 +213,15 @@ begin
   Net := TNetHttpClient.Create(self);
   prm := TMultipartFormData.Create(true);
   tipo := tipofile(orig);
-  prm.AddFile('file', orig, tipo);
-  prm.AddField('source', orig);
-  prm.AddField('target', dest);
+  prm.AddFile('file', orig);
+  prm.AddField('type',tipo);
+  prm.AddField('source', lngorig);
+  prm.AddField('target', lngdest);
   prm.AddField('api_key', apikey);
   try
     ris := Net.Post(Endpoint + 'translate_file', prm).ContentAsString();
-  finally
-    prm.DisposeOf;
     url := TJSONObject.ParseJSONValue(ris) as TJSONObject;
     dwn := url.GetValue<String>('translatedFileUrl');
-    try
       tm := TMemoryStream.Create;
       Net.Get(dwn, tm).ContentStream;
     finally
@@ -206,7 +231,6 @@ begin
       Net.DisposeOf;
     end;
   end;
-end;
 
 function TLibreTrans.urlendpoint(index: integer): string;
 begin
