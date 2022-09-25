@@ -3,7 +3,7 @@
 { Delphi component library for LibreTranslator service  }
 {              relased under license AGPL 3.0           }
 {                                                       }
-{ Copyright (C) 2022 Created by Aloe Luigi. 22/09/2022  }
+{ Copyright (C) 2022 Created by Aloe Luigi. 25/09/2022  }
 {                                                       }
 {*******************************************************}
 {    Platform supported:Win,Linux,MacOS,Android,IOS     }
@@ -23,6 +23,7 @@ type
   TLibreTrans = class(TComponent)
   private
     resturl: string;
+    function sitonline(sitoweb:string):boolean;
   protected
     apikey: string;
     function keyapi: string;
@@ -39,8 +40,7 @@ type
     function translatefile(orig, dest, lngorig, lngdest: string): string;
     function translate(Text, orglng, dstlng: string): string;
     function autotranslate(Text, dstlng: string): string;
-    function sitonline(sitoweb:string):boolean;
-    procedure controllasito;
+    procedure autoendpoint;
   end;
 
 const
@@ -51,10 +51,10 @@ const
     'application/vnd.openxmlformats-officedocument.presentationml.presentation',
     'application/epub+zip', 'type=text/html'];
 
-const sito: TArray < String >= ['https://libretranslate.com/', 'https://libretranslate.de/',
-  'https://translate.argosopentech.com/', 'https://translate.api.skitzen.com/',
+const sito: TArray < String >= ['https://lt.vern.cc/',
+  'https://translate.argosopentech.com/', 'https://libretranslate.com/',
   'https://translate.fortytwo-it.com/', 'https://translate.terraprint.co/',
-  'https://lt.vern.cc/'];
+  'https://libretranslate.de/'];
 
 Procedure Register;
 
@@ -93,10 +93,9 @@ begin
   end;
 end;
 
-procedure TLibreTrans.controllasito;
-var i:integer;
+procedure TLibreTrans.autoendpoint;
 begin
-for I := Low(sito) to High(sito) do
+for var I:integer := Low(sito) to High(sito) do
 begin
 if sitonline(sito[i]) then
 begin
