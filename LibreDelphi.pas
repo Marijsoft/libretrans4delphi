@@ -1,29 +1,29 @@
-{*******************************************************}
-{                                                       }
-{ Delphi component library for LibreTranslator service  }
-{              relased under license AGPL 3.0           }
-{                                                       }
-{ Copyright (C) 2022 Created by MarijSoft. 25/09/2022  }
-{                                                       }
-{*******************************************************}
-{    Platform supported:Win,Linux,MacOS,Android,IOS     }
-{*******************************************************}
+{ *******************************************************}
+{ Delphi component library for LibreTranslator service   }
+{ relased under license AGPL 3.0                         }
+{                                                        }
+{ Copyright (C) 2022 Created by MarijSoft. 28/09/2022    }
+{ ****************************************************** }
+{ Platform supported:Win,Linux,MacOS,Android,IOS         }
+{ ****************************************************** }
+
 unit LibreDelphi;
 
 interface
 
 uses
   System.Net.URLClient, System.Net.HttpClient, System.Net.HttpClientComponent,
-  System.Net.Mime,System.JSON, System.Types, System.UITypes, System.Classes, System.SysUtils,
+  System.Net.Mime, System.JSON, System.Types, System.UITypes, System.Classes,
+  System.SysUtils,
   System.Variants, System.Generics.Collections, System.Messaging;
 
-
 type
+
   [ComponentPlatformsAttribute($000B945F)]
   TLibreTrans = class(TComponent)
   private
     resturl: string;
-    function sitonline(sitoweb:string):boolean;
+    function sitonline(sitoweb: string): boolean;
   protected
     apikey: string;
     function keyapi: string;
@@ -44,14 +44,15 @@ type
   end;
 
 const
-  ty: TArray<String> = ['text/plain',
-    'application/vnd.oasis.opendocument.text',
+  ty: TArray<String> = ['text/plain', 'application/vnd.oasis.opendocument.text',
     'application/vnd.oasis.opendocument.presentation',
     'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
     'application/vnd.openxmlformats-officedocument.presentationml.presentation',
     'application/epub+zip', 'type=text/html'];
 
-const sito: TArray < String >= ['https://lt.vern.cc/',
+const
+sito:
+TArray < String >= ['https://lt.vern.cc/',
   'https://translate.argosopentech.com/', 'https://libretranslate.com/',
   'https://translate.fortytwo-it.com/', 'https://translate.terraprint.co/',
   'https://libretranslate.de/'];
@@ -76,7 +77,7 @@ var
   Jobj: TJSONObject;
   Net: TNetHttpClient;
 begin
-  Net := TNetHttpClient.Create(self);
+  Net := TNetHttpClient.Create(nil);
   risp := Net.Get(Endpoint + '/languages').ContentAsString();
   lng := TJSONObject.ParseJSONValue(risp) as TJsonValue;
   Result := TStringList.Create;
@@ -95,14 +96,14 @@ end;
 
 procedure TLibreTrans.autoendpoint;
 begin
-for var I:integer := Low(sito) to High(sito) do
-begin
-if sitonline(sito[i]) then
-begin
-urlendpoint(i);
-break
-end;
-end;
+  for var I: integer := Low(sito) to High(sito) do
+  begin
+    if sitonline(sito[I]) then
+    begin
+      urlendpoint(I);
+      break
+    end;
+  end;
 end;
 
 constructor TLibreTrans.Create(AOwner: TComponent);
@@ -148,14 +149,17 @@ begin
 end;
 
 function TLibreTrans.sitonline(sitoweb: string): boolean;
-var net:TNethttpClient;
-s:integer;
+var
+  Net: TNetHttpClient;
+  s: integer;
 begin
-net:=TNetHttpClient.Create(self);
-s:=net.Get(sitoweb,nil).StatusCode;
-if s=200 then
-Result:=true else Result:=false;
-net.DisposeOf;
+  Net := TNetHttpClient.Create(nil);
+  s := Net.Get(sitoweb, nil).StatusCode;
+  if s = 200 then
+    Result := true
+  else
+    Result := false;
+  Net.DisposeOf;
 end;
 
 function TLibreTrans.translate(Text, orglng, dstlng: string): string;
@@ -171,16 +175,24 @@ begin
   prm.AddPair('target', dstlng);
   prm.AddPair('format', 'text');
   prm.AddPair('api_key', apikey);
-  Net := TNetHttpClient.Create(self);
+  Net := TNetHttpClient.Create(nil);
   try
-    trad := Net.Post(Endpoint + 'translate', prm).ContentAsString(TEncoding.UTF8);
-    val := TJSONObject.ParseJSONValue(trad) as TJsonValue;
-    Result := val.GetValue<String>('translatedText');
+    with Net.Create(nil) do
+      try
+        trad := Net.Post(Endpoint + 'translate', prm)
+          .ContentAsString(TEncoding.UTF8);
+        val := TJSONObject.ParseJSONValue(trad) as TJsonValue;
+        Result := val.GetValue<String>('translatedText');
+      except
+        on E: Exception do
+          raise Exception.Create
+            ('Error Translation check your internet connection' + #13 +
+            'or try again later');
+      end;
   finally
     prm.DisposeOf;
     Net.DisposeOf;
   end;
-
 end;
 
 function TLibreTrans.translatefile(orig, dest, lngorig,
@@ -208,33 +220,42 @@ var
     if tfile.Contains('.html') then
       Result := ty[6];
   end;
+
 begin
-  Net := TNetHttpClient.Create(self);
+  Net := TNetHttpClient.Create(nil);
   prm := TMultipartFormData.Create(true);
   tipo := tipofile(orig);
   prm.AddFile('file', orig);
-  prm.AddField('type',tipo);
+  prm.AddField('type', tipo);
   prm.AddField('source', lngorig);
   prm.AddField('target', lngdest);
   prm.AddField('api_key', apikey);
   try
-    ris := Net.Post(Endpoint + 'translate_file', prm).ContentAsString();
-    url := TJSONObject.ParseJSONValue(ris) as TJSONObject;
-    dwn := url.GetValue<String>('translatedFileUrl');
-      tm := TMemoryStream.Create;
-      Net.Get(dwn, tm).ContentStream;
-    finally
-      tm.Position := 0;
-      tm.SaveToFile(dest);
-      tm.DisposeOf;
-      Net.DisposeOf;
-    end;
+    with Net.Create(nil) do
+      try
+        ris := Net.Post(Endpoint + 'translate_file', prm).ContentAsString();
+        url := TJSONObject.ParseJSONValue(ris) as TJSONObject;
+        dwn := url.GetValue<String>('translatedFileUrl');
+        tm := TMemoryStream.Create;
+        Net.Get(dwn, tm).ContentStream;
+      except
+        on E: Exception do
+          raise Exception.Create
+            ('Error Translate file check your internet connection' + #13 +
+            'or try again later');
+      end;
+  finally
+    tm.Position := 0;
+    tm.SaveToFile(dest);
+    tm.DisposeOf;
+    Net.DisposeOf;
   end;
+end;
 
 function TLibreTrans.urlendpoint(index: integer): string;
 begin
-Result := sito[index];
-Endpoint:=result;
+  Result := sito[index];
+  Endpoint := Result;
 end;
 
 function TLibreTrans.autotranslate(Text, dstlng: string): string;
@@ -250,14 +271,23 @@ begin
   prm.AddPair('target', dstlng);
   prm.AddPair('format', 'text');
   prm.AddPair('api_key', apikey);
-  Net := TNetHttpClient.Create(self);
+  Net := TNetHttpClient.Create(nil);
   try
-    trad := Net.Post(Endpoint + 'translate', prm).ContentAsString(TEncoding.UTF8);
-    val := TJSONObject.ParseJSONValue(trad) as TJsonValue;
-    Result := val.GetValue<String>('translatedText');
+    with Net.Create(nil) do
+      try
+        trad := Net.Post(Endpoint + 'translate', prm)
+          .ContentAsString(TEncoding.UTF8);
+        val := TJSONObject.ParseJSONValue(trad) as TJsonValue;
+        Result := val.GetValue<String>('translatedText');
+      except
+        on E: Exception do
+          raise Exception.Create
+            ('Error Translation check your internet connection' + #13 +
+            'or try again later');
+      end;
   finally
-    prm.DisposeOf;
     Net.DisposeOf;
+    prm.DisposeOf;
   end;
 end;
 
@@ -271,7 +301,7 @@ begin
   param := TStringList.Create;
   param.AddPair('q', Text);
   param.AddPair('api_key', apikey);
-  Net := TNetHttpClient.Create(self);
+  Net := TNetHttpClient.Create(nil);
   try
     risp := Net.Post(Endpoint + 'detect', param).ContentAsString;
     risp := Trim(risp);
