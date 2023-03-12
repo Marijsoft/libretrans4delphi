@@ -1,7 +1,6 @@
 { *******************************************************}
 { Delphi component library for LibreTranslator service   }
 { relased under license AGPL 3.0                         }
-{                                                        }
 { Copyright (C) 2022 Created by MarijSoft. 28/09/2022    }
 { ****************************************************** }
 { Platform supported:Win,Linux,MacOS,Android,IOS         }
@@ -204,21 +203,18 @@ var
   tm: TMemoryStream;
   Net: TNetHttpClient;
   function tipofile(tfile: string): string;
+  var
+    ext: string;
   begin
-    if tfile.Contains('.txt') then
-      Result := ty[0];
-    if tfile.Contains('.odt') then
-      Result := ty[1];
-    if tfile.Contains('.odp') then
-      Result := ty[2];
-    if tfile.Contains('.docx') then
-      Result := ty[3];
-    if tfile.Contains('.pptx') then
-      Result := ty[4];
-    if tfile.Contains('.epub') then
-      Result := ty[5];
-    if tfile.Contains('.html') then
-      Result := ty[6];
+    ext := LowerCase(ExtractFileExt(tfile));
+    for var I: integer := Low(ty) to High(ty) do
+    begin
+      if Pos(ty[I], ext) > 0 then
+      begin
+        Result := ty[I];
+        break;
+      end;
+    end;
   end;
 
 begin
@@ -247,8 +243,8 @@ begin
   finally
     tm.Position := 0;
     tm.SaveToFile(dest);
-    tm.DisposeOf;
-    Net.DisposeOf;
+    FreeAndNil(tm);
+    FreeAndNil(Net);
   end;
 end;
 
