@@ -74,9 +74,7 @@ var
   x: integer;
   JAr: TJSONArray;
   Jobj: TJSONObject;
-  Net: TNetHttpClient;
-begin
-  Net := TNetHttpClient.Create(nil);
+  begin
   risp := Net.Get(Endpoint + '/languages').ContentAsString();
   lng := TJSONObject.ParseJSONValue(risp) as TJsonValue;
   Result := TStringList.Create;
@@ -89,7 +87,6 @@ begin
     end;
   finally
     lng.DisposeOf;
-    Net.DisposeOf;
   end;
 end;
 
@@ -106,14 +103,17 @@ begin
 end;
 
 constructor TLibreTrans.Create(AOwner: TComponent);
+var net:thethttpclient;
 begin
   inherited Create(AOwner);
   apikey := keyapi;
+  Net := TNetHttpClient.Create(nil);
 end;
 
 destructor TLibreTrans.Destroy;
 begin
   inherited;
+  freeandnil(net);
 end;
 
 function TLibreTrans.keyapi: string;
@@ -128,9 +128,7 @@ var
   x: integer;
   JAr: TJSONArray;
   Jobj: TJSONObject;
-  Net: TNetHttpClient;
-begin
-  Net := TNetHttpClient.Create(self);
+ begin
   risp := Net.Get(Endpoint + 'languages').ContentAsString();
   lng := TJSONObject.ParseJSONValue(risp) as TJsonValue;
   Result := TStringList.Create;
@@ -143,22 +141,18 @@ begin
     end;
   finally
     lng.DisposeOf;
-    Net.DisposeOf;
   end;
 end;
 
 function TLibreTrans.sitonline(sitoweb: string): boolean;
 var
-  Net: TNetHttpClient;
   s: integer;
 begin
-  Net := TNetHttpClient.Create(nil);
   s := Net.Get(sitoweb, nil).StatusCode;
   if s = 200 then
     Result := true
   else
     Result := false;
-  Net.DisposeOf;
 end;
 
 function TLibreTrans.translate(Text, orglng, dstlng: string): string;
@@ -166,7 +160,6 @@ var
   prm: TStringList;
   trad: string;
   val: TJsonValue;
-  Net: TNetHttpClient;
 begin
   prm := TStringList.Create;
   prm.AddPair('q', Text);
@@ -174,7 +167,6 @@ begin
   prm.AddPair('target', dstlng);
   prm.AddPair('format', 'text');
   prm.AddPair('api_key', apikey);
-  Net := TNetHttpClient.Create(nil);
   try
     with Net.Create(nil) do
       try
@@ -190,7 +182,6 @@ begin
       end;
   finally
     prm.DisposeOf;
-    Net.DisposeOf;
   end;
 end;
 
@@ -201,7 +192,6 @@ var
   ris, dwn, tipo: String;
   url: TJsonValue;
   tm: TMemoryStream;
-  Net: TNetHttpClient;
   function tipofile(tfile: string): string;
   var
     ext: string;
@@ -218,7 +208,6 @@ var
   end;
 
 begin
-  Net := TNetHttpClient.Create(nil);
   prm := TMultipartFormData.Create(true);
   tipo := tipofile(orig);
   prm.AddFile('file', orig);
@@ -244,7 +233,6 @@ begin
     tm.Position := 0;
     tm.SaveToFile(dest);
     FreeAndNil(tm);
-    FreeAndNil(Net);
   end;
 end;
 
@@ -259,7 +247,6 @@ var
   prm: TStringList;
   trad: string;
   val: TJsonValue;
-  Net: TNetHttpClient;
 begin
   prm := TStringList.Create;
   prm.AddPair('q', Text);
@@ -267,7 +254,6 @@ begin
   prm.AddPair('target', dstlng);
   prm.AddPair('format', 'text');
   prm.AddPair('api_key', apikey);
-  Net := TNetHttpClient.Create(nil);
   try
     with Net.Create(nil) do
       try
@@ -282,7 +268,6 @@ begin
             'or try again later');
       end;
   finally
-    Net.DisposeOf;
     prm.DisposeOf;
   end;
 end;
@@ -292,12 +277,10 @@ var
   risp: string;
   param: TStringList;
   lng: TJsonValue;
-  Net: TNetHttpClient;
 begin
   param := TStringList.Create;
   param.AddPair('q', Text);
   param.AddPair('api_key', apikey);
-  Net := TNetHttpClient.Create(nil);
   try
     risp := Net.Post(Endpoint + 'detect', param).ContentAsString;
     risp := Trim(risp);
@@ -307,7 +290,6 @@ begin
     Result := lng.GetValue<String>('language');
   finally
     param.DisposeOf;
-    Net.DisposeOf;
   end;
 end;
 
