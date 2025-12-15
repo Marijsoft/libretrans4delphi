@@ -56,6 +56,8 @@ TArray < String >= ['https://lt.vern.cc/',
   'https://translate.fortytwo-it.com/', 'https://translate.terraprint.co/',
   'https://libretranslate.de/'];
 
+var net:tnethttpclient;
+
 Procedure Register;
 
 implementation
@@ -294,3 +296,4 @@ begin
 end;
 
 end.
+
