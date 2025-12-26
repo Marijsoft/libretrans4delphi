@@ -66,6 +66,7 @@ type
 procedure Register;
 
 implementation
+uses System.IOUtils;
 
 const
   CEndpointUrls: array[TLibreEndpointSite] of string = (
@@ -80,11 +81,6 @@ const
     'https://translate.fedilab.app/'
   );
 
-ty: TArray<String> = ['text/plain', 'application/vnd.oasis.opendocument.text',
-'application/vnd.oasis.opendocument.presentation',
-'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
-'application/vnd.openxmlformats-officedocument.presentationml.presentation',
-'application/epub+zip', 'type=text/html'];
 
 procedure Register;
 begin
@@ -228,25 +224,30 @@ begin
   end;
 end;
 
-function tipofile(tfile: string): string;
+function TipoFile(const AFileName: string): string;
+const
+  CDefaultError = 'Tipo di file non supportato';
+var
+  Ext: string;
+  MimeMap: TDictionary<string, string>;
 begin
-  if tfile.Contains('.txt') then
-    Result := ty[0]
-  else if tfile.Contains('.odt') then
-    Result := ty[1]
-  else if tfile.Contains('.odp') then
-    Result := ty[2]
-  else if tfile.Contains('.docx') then
-    Result := ty[3]
-  else if tfile.Contains('.pptx') then
-    Result := ty[4]
-  else if tfile.Contains('.epub') then
-    Result := ty[5]
-  else if tfile.Contains('.html') then
-    Result := ty[6]
-  else
-    raise Exception.Create('Tipo di file non supportato');
+  Ext := LowerCase(TPath.GetExtension(AFileName));
+  MimeMap := TDictionary<string, string>.Create;
+  try
+    MimeMap.Add('.txt',  'text/plain');
+    MimeMap.Add('.odt',  'application/vnd.oasis.opendocument.text');
+    MimeMap.Add('.odp',  'application/vnd.oasis.opendocument.presentation');
+    MimeMap.Add('.docx', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document');
+    MimeMap.Add('.pptx', 'application/vnd.openxmlformats-officedocument.presentationml.presentation');
+    MimeMap.Add('.epub', 'application/epub+zip');
+    MimeMap.Add('.html','text/html');
+    if not MimeMap.TryGetValue(Ext, Result) then
+      raise Exception.Create(CDefaultError);
+  finally
+    MimeMap.Free;
+  end;
 end;
+
 
 
 function TLibreTrans.TranslateFile(
